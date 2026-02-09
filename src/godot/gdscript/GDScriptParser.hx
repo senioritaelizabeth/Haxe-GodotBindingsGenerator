@@ -225,7 +225,30 @@ class GDScriptParser {
 
 			// Check for @export annotation
 			if (trimmed.startsWith("@export")) {
-				isExportNext = true;
+				// Check if it's inline: @export var name
+				if (trimmed.indexOf(" var ") != -1) {
+					// Extract the var part and parse it
+					final varPart = trimmed.substr(trimmed.indexOf("var "));
+					final prop = parseProperty(varPart, true, lastComment);
+					if (prop != null) {
+						// Check for duplicates
+						var isDuplicate = false;
+						for (existing in properties) {
+							if (existing.name == prop.name) {
+								isDuplicate = true;
+								break;
+							}
+						}
+						if (!isDuplicate) {
+							properties.push(prop);
+						}
+					}
+					lastComment = null;
+					isExportNext = false;
+				} else {
+					// @export on its own line, next line should be var
+					isExportNext = true;
+				}
 				continue;
 			}
 
